@@ -1,82 +1,90 @@
 using Mono.Options;
 
+public struct OptionInfo
+{
+    public WordFilter[] Filters { get; set; }
+    public string Culture { get; set; }
+}
+
 public static class OptionHelper
 {
-    internal static WordFilter[] Setup(
+    private static void PositionFilterHelper(
+        string act,
+        List<WordFilter> filters,
+        TypeFilter containsType)
+    {
+        var letter = act.Split(',')[0];
+        var position = act.Split(',')[1];
+        WordFilter filter = new()
+        {
+            Type = containsType,
+            Position = int.Parse(position),
+            Letter = char.Parse(letter)
+        };
+        filter.Validate();
+        filters.Add(filter);
+    }
+
+    private static void ContainsFilterHelper(
+        string act,
+        List<WordFilter> filters,
+        TypeFilter containsType)
+    {
+        var letters = act.Split(',');
+        foreach (var letter in letters)
+        {
+            WordFilter filter = new()
+            {
+                Type = containsType,
+                Letter = char.Parse(letter)
+            };
+            filter.Validate();
+            filters.Add(filter);
+        }
+    }
+
+    internal static OptionInfo Setup(
         string[] args,
         out List<string> extraArgs)
     {
         List<WordFilter> filters = new();
+        string culture = string.Empty;
 
         var opts = new OptionSet
         {
             {
-                "s|size=", "word length", 
-                act => { 
-                    filters.Add(new WordFilter { Type = TypeFilter.Size, Size = int.Parse(act) }); 
-                } 
+                "f|filename=", "sets file name to read words from",
+                act => culture = act
             },
-            { 
+            {
+                "s|size=", "word length",
+                act => filters.Add(new WordFilter { Type = TypeFilter.Size, Size = int.Parse(act) })
+            },
+            {
                 "n|notcontains=", "does not contains letter(s), separated by comma (',')",
-                act => {
-                    var letters = act.Split(',');
-                    foreach (var letter in letters)
-                        filters.Add(
-                            new WordFilter
-                            {
-                                Type = TypeFilter.LetterNotContains,
-                                Letter = char.Parse(letter)
-                            }
-                        );
-                } 
+                act => ContainsFilterHelper(act, filters, TypeFilter.LetterNotContains)
             },
-            { 
+            {
                 "c|contains=", "contains letter(s), separated by comma (',')",
-                act => {
-                    var letters = act.Split(',');
-                    foreach (var letter in letters)
-                        filters.Add(
-                            new WordFilter
-                            {
-                                Type = TypeFilter.LetterContains,
-                                Letter = char.Parse(letter)
-                            }
-                        );
-                }
+                act => ContainsFilterHelper(act, filters, TypeFilter.LetterContains)
             },
-            { 
+            {
                 "p|positioncontains=", "contains in letter in position, separated by comma (',')",
-                act => {
-                    var letter = act.Split(',')[0];
-                    var position = act.Split(',')[1];
-                    filters.Add(
-                        new WordFilter
-                        {
-                            Type = TypeFilter.PositionContains,
-                            Position = int.Parse(position),
-                            Letter = char.Parse(letter)
-                        }
-                    );
-                }
+                act => PositionFilterHelper(act, filters, TypeFilter.PositionContains)
             },
-            { 
+            {
                 "o|positionnotcontains=", "does not contains letter in position, separated by comma (',')",
-                act => {
-                    var letter = act.Split(',')[0];
-                    var position = act.Split(',')[1];
-                    filters.Add(
-                        new WordFilter
-                        {
-                            Type = TypeFilter.PositionNotContains,
-                            Position = int.Parse(position),
-                            Letter = char.Parse(letter)
-                        }
-                    );
-                }
+                act => PositionFilterHelper(act, filters, TypeFilter.PositionNotContains)
             }
         };
 
         extraArgs = opts.Parse(args);
-        return filters.ToArray();
+        filters.Sort();
+
+        return new OptionInfo
+        {
+            Filters = filters.ToArray(),
+            Culture = culture
+        };
     }
 }

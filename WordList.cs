@@ -1,18 +1,19 @@
-public enum TypeFilter 
+public enum TypeFilter
 {
     Default = 0,
-    LetterContains = 1,
-    LetterNotContains = 2,
-    PositionContains = 3,
-    PositionNotContains = 4,
-    Size = 5,
+    Size = 1,
+    PositionContains = 2,
+    PositionNotContains = 3,
+    LetterContains = 4,
+    LetterNotContains = 5,
 }
 
-public struct WordFilter
+public struct WordFilter : IComparable
 {
     public bool? Validator
     {
-        get {
+        get
+        {
             return this.Type switch
             {
                 TypeFilter.LetterContains => true,
@@ -29,12 +30,28 @@ public struct WordFilter
     public int? Position { get; set; }
     public char? Letter { get; set; }
 
+    public int CompareTo(object obj)
+    {
+        try
+        {
+            if (obj is null)
+                return 1;
+
+            WordFilter other = (WordFilter)obj;
+            return this.Type.CompareTo(other.Type);
+        }
+        catch (System.Exception)
+        {
+            throw new ArgumentException(paramName: nameof(obj), message: $"Object is not a {nameof(WordFilter)} type.");
+        }
+    }
+
     public void Validate()
     {
         if (this.Type == TypeFilter.Default)
             throw new ArgumentException(paramName: nameof(this.Type), message: "Filter must have a type.");
         if (this.Type == TypeFilter.Size
-            && (this.Size == null || this.Size <=0))
+            && (this.Size == null || this.Size <= 0))
             throw new ArgumentException(paramName: nameof(this.Size), message: "Filter with the size type must have a size valeu.");
         if (this.Type != TypeFilter.Size
             && this.Letter.HasValue
@@ -43,8 +60,8 @@ public struct WordFilter
         if ((this.Type == TypeFilter.PositionContains
             || this.Type == TypeFilter.PositionNotContains)
             && (this.Position is null
-                || this.Position <= 0))
-                throw new ArgumentException(paramName: nameof(this.Position), message: "Position type filter must have a position.");
+                || this.Position < 0))
+            throw new ArgumentException(paramName: nameof(this.Position), message: "Position type filter must have a position.");
     }
 }
 
@@ -56,12 +73,16 @@ public class WordList
 
     public string[] Words
     {
-        get { return _wordList; }   
+        get { return _wordList; }
     }
 
     public WordList(
         string[] wordList)
     {
+        if (wordList is null
+            || wordList.Length == 0)
+            throw new ArgumentNullException(paramName: nameof(wordList), message:"Wordlist must not be null");
+
         this._wordList = wordList;
     }
 
@@ -70,10 +91,10 @@ public class WordList
     {
         if (string.IsNullOrWhiteSpace(culture))
             throw new ArgumentNullException(paramName: nameof(culture), message: "Culture must not be a null value.");
-            
+
         if (!culture.Contains(".txt"))
             culture += ".txt";
-            
+
         string fullPath = Path.Join(_filePath, culture);
         _wordList = System.IO.File.ReadAllLines(fullPath, System.Text.Encoding.UTF8);
     }
@@ -81,9 +102,6 @@ public class WordList
     public WordList Filter(
         params WordFilter[] filters)
     {
-        foreach (var filter in filters)
-            filter.Validate();
-
         foreach (var filter in filters)
         {
             switch (filter.Type)
@@ -114,7 +132,7 @@ public class WordList
             this._wordList
                 .Where(_ => _.Length == size)
                 .ToArray();
-                
+
         return this;
     }
 
@@ -137,7 +155,7 @@ public class WordList
     {
         this._wordList =
             this._wordList
-                .Where(_ => validator ? 
+                .Where(_ => validator ?
                     _.Contains(letter.ToString(), StringComparison.OrdinalIgnoreCase)
                     : !_.Contains(letter.ToString(), StringComparison.OrdinalIgnoreCase))
                 .ToArray();

@@ -4,8 +4,19 @@
 
 using Mono.Options;
 
-var wordList = new WordList("pt-br");
-var filters = OptionHelper.Setup(Args.ToArray(), out var extra);
+const string CLIPreMessage = "[*]:>";
+try
+{
+    var optionInfo = OptionHelper.Setup(Args.ToArray(), out var extra);
+    var wordList = new WordList(optionInfo.Culture);
 
-foreach (var word in wordList.Filter(filters).Words)
-    WriteLine(word);
+    WriteLine($"{CLIPreMessage} Words that match your filter:");
+    WriteLine($"{CLIPreMessage} {new string('-', 30)}");
+    foreach (var word in wordList.Filter(optionInfo.Filters).Words)
+        WriteLine($"{CLIPreMessage} {word}");
+    WriteLine($"{CLIPreMessage} {new string('-', 30)}");
+}
+catch (Exception e)
+{
+    WriteLine($"{CLIPreMessage} {e.Message}");
+}

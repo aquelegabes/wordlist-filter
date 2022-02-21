@@ -13,16 +13,18 @@
                 // empty space needed
                 "","",
                 // everything after this is args
+                // culture/filename
+                "--filename=en-us",
                 // size
                 "--size=5",
                 // not contains
                 "-n=f,l,i,a",
                 // contains
-                "-c=o,n,e",
+                "-c=o,v",
                 // position contains
-                //"-p=p,3", "-p=e,1", "-p=n,2"
+                "-p=o,0", "-p=u,1",
                 // position not contains
-                // "-o=o,0"
+                "-o=g,1"
             ],
             "cwd": "${workspaceRoot}",
             "stopAtEntry": false
