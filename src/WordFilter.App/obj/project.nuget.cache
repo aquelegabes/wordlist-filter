@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "/cxN82zwRBTsTNYLH3mUSpcCC2bNHTQSWGzhIkS2ghj3fHaTStXtaTtmo4OEslDBkgAeYw9W5oe/ti6pUToRwA==",
+  "success": true,
+  "projectFilePath": "C:\\Users\\gabes\\Downloads\\termoo-helper\\src\\WordFilter.App\\WordFilter.App.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\gabes\\.nuget\\packages\\mono.options\\6.12.0.148\\mono.options.6.12.0.148.nupkg.sha512"
+  ],
+  "logs": []
+}
