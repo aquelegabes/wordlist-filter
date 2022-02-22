@@ -8,6 +8,20 @@ public struct OptionInfo
 
 public static class OptionHelper
 {
+    private static void WithFilterHelper(
+        string act,
+        List<WordFilter> filters,
+        TypeFilter type)
+    {
+        WordFilter filter = new()
+        {
+            Type = type,
+            StringFilter = act
+        };
+        filter.Validate();
+        filters.Add(filter);
+    }
+
     private static void PositionFilterHelper(
         string act,
         List<WordFilter> filters,
@@ -69,12 +83,20 @@ public static class OptionHelper
                 act => ContainsFilterHelper(act, filters, TypeFilter.LetterContains)
             },
             {
-                "p|positioncontains=", "contains in letter in position, separated by comma (',')",
+                "p|positioncontains=", "contains in letter in position, separated by comma (',')(position starts at index 0)",
                 act => PositionFilterHelper(act, filters, TypeFilter.PositionContains)
             },
             {
-                "o|positionnotcontains=", "does not contains letter in position, separated by comma (',')",
+                "o|positionnotcontains=", "does not contains letter in position, separated by comma (',')(position starts at index 0)",
                 act => PositionFilterHelper(act, filters, TypeFilter.PositionNotContains)
+            },
+            {
+                "e|endswith=", "ends with specified string",
+                act => WithFilterHelper(act, filters, TypeFilter.EndsWith)
+            },
+            {
+                "b|beginswith=", "begins with specified string",
+                act => WithFilterHelper(act, filters, TypeFilter.StartsWith)
             }
         };
 

@@ -6,6 +6,8 @@ public enum TypeFilter
     PositionNotContains = 3,
     LetterContains = 4,
     LetterNotContains = 5,
+    EndsWith = 6,
+    StartsWith = 7,
 }
 
 public struct WordFilter : IComparable
@@ -29,6 +31,7 @@ public struct WordFilter : IComparable
     public int? Size { get; set; }
     public int? Position { get; set; }
     public char? Letter { get; set; }
+    public string StringFilter { get; set; }
 
     public int CompareTo(object obj)
     {
@@ -50,18 +53,27 @@ public struct WordFilter : IComparable
     {
         if (this.Type == TypeFilter.Default)
             throw new ArgumentException(paramName: nameof(this.Type), message: "Filter must have a type.");
+
         if (this.Type == TypeFilter.Size
             && (this.Size == null || this.Size <= 0))
             throw new ArgumentException(paramName: nameof(this.Size), message: "Filter with the size type must have a size valeu.");
+
         if (this.Type != TypeFilter.Size
             && this.Letter.HasValue
             && !char.IsLetter(this.Letter.Value))
             throw new ArgumentException(paramName: nameof(this.Letter), message: "This filter must have a letter.");
+
         if ((this.Type == TypeFilter.PositionContains
             || this.Type == TypeFilter.PositionNotContains)
             && (this.Position is null
                 || this.Position < 0))
             throw new ArgumentException(paramName: nameof(this.Position), message: "Position type filter must have a position.");
+
+        if ((this.Type == TypeFilter.StartsWith
+            || this.Type == TypeFilter.EndsWith)
+            && string.IsNullOrWhiteSpace(this.StringFilter))
+            throw new ArgumentException(paramName: nameof(this.StringFilter), message: "When using 'ends with' or 'starts with' filter a string must be passed.");
+
     }
 }
 
@@ -81,7 +93,7 @@ public class WordList
     {
         if (wordList is null
             || wordList.Length == 0)
-            throw new ArgumentNullException(paramName: nameof(wordList), message:"Wordlist must not be null");
+            throw new ArgumentNullException(paramName: nameof(wordList), message: "Wordlist must not be null");
 
         this._wordList = wordList;
     }
@@ -106,6 +118,9 @@ public class WordList
         {
             switch (filter.Type)
             {
+                case TypeFilter.Size:
+                    this.SizeFilter(filter.Size.Value);
+                    break;
                 case TypeFilter.LetterContains:
                 case TypeFilter.LetterNotContains:
                     this.LetterFilter(filter.Letter.Value, filter.Validator.Value);
@@ -114,12 +129,38 @@ public class WordList
                 case TypeFilter.PositionNotContains:
                     this.PositionFilter(filter.Letter.Value, filter.Position.Value, filter.Validator.Value);
                     break;
-                case TypeFilter.Size:
-                    this.SizeFilter(filter.Size.Value);
+                case TypeFilter.EndsWith:
+                case TypeFilter.StartsWith:
+                    this.WithFilter(filter.StringFilter, filter.Type);
                     break;
                 default:
                     break;
             }
+        }
+
+        return this;
+    }
+
+    internal WordList WithFilter(
+        string filter,
+        TypeFilter type)
+    {
+        switch (type)
+        {
+            case TypeFilter.EndsWith:
+                this._wordList =
+                    this._wordList
+                        .Where(_ => _.EndsWith(filter, StringComparison.OrdinalIgnoreCase))
+                        .ToArray();
+                break;
+            case TypeFilter.StartsWith:
+                this._wordList =
+                    this._wordList
+                        .Where(_ => _.StartsWith(filter, StringComparison.OrdinalIgnoreCase))
+                        .ToArray();
+                break;
+            default:
+                break;
         }
 
         return this;
@@ -143,7 +184,7 @@ public class WordList
     {
         this._wordList =
             this._wordList
-                .Where(_ => validator ? _[position] == letter : _[position] != letter)
+                .Where(_ => (_[position] == letter) == validator)
                 .ToArray();
 
         return this;
@@ -155,9 +196,7 @@ public class WordList
     {
         this._wordList =
             this._wordList
-                .Where(_ => validator ?
-                    _.Contains(letter.ToString(), StringComparison.OrdinalIgnoreCase)
-                    : !_.Contains(letter.ToString(), StringComparison.OrdinalIgnoreCase))
+                .Where(_ => _.Contains(letter.ToString(), StringComparison.OrdinalIgnoreCase) == validator)
                 .ToArray();
 
         return this;

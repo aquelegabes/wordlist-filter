@@ -14,7 +14,7 @@
                 "","",
                 // everything after this is args
                 // culture/filename
-                "--filename=en-us",
+                "--filename=pt-br",
                 // size
                 "--size=5",
                 // not contains
@@ -25,6 +25,10 @@
                 "-p=o,0", "-p=u,1",
                 // position not contains
                 "-o=g,1"
+                // endswith
+                // "-e=aem",
+                // beginswith
+                // "-b=abs"
             ],
             "cwd": "${workspaceRoot}",
             "stopAtEntry": false
